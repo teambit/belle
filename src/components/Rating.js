@@ -1,57 +1,159 @@
 import React, { Component, PropTypes } from 'react';
 import { canUseDOM } from 'exenv';
-import { omit, has, uniqueId } from '../utils/helpers';
+import omit from '../utils/helpers/omit';
+import has from '../utils/helpers/has';
+import uniqueId from '../utils/helpers/uniqueId';
 import style from '../style/rating.js';
 import { injectStyles, removeStyle } from '../utils/inject-style';
 import unionClassNames from '../utils/union-class-names';
 import config from '../config/rating';
 import { requestAnimationFrame, cancelAnimationFrame } from '../utils/animation-frame-management';
 
-const ratingPropTypes = {
-  defaultValue: PropTypes.oneOf([1, 2, 3, 4, 5]),
-  value: PropTypes.oneOf([1, 2, 3, 4, 5]),
-  valueLink: PropTypes.shape({
-    value: PropTypes.oneOf([1, 2, 3, 4, 5]),
-    requestChange: PropTypes.func.isRequired,
-  }),
-  disabled: PropTypes.bool,
-  tabIndex: PropTypes.number,
-  character: PropTypes.string,
-  characterProps: PropTypes.object,
-  preventFocusStyleForTouchAndClick: PropTypes.bool,
-  'aria-label': PropTypes.string,
-  style: PropTypes.object,
-  className: PropTypes.string,
-  focusStyle: PropTypes.object,
-  disabledStyle: PropTypes.object,
-  hoverStyle: PropTypes.object,
-  disabledHoverStyle: PropTypes.object,
-  characterStyle: PropTypes.object,
-  activeCharacterStyle: PropTypes.object,
-  hoverCharacterStyle: PropTypes.object,
-  onUpdate: PropTypes.func,
-  onMouseDown: PropTypes.func,
-  onMouseUp: PropTypes.func,
-  onMouseEnter: PropTypes.func,
-  onMouseMove: PropTypes.func,
-  onMouseLeave: PropTypes.func,
-  onTouchStart: PropTypes.func,
-  onTouchMove: PropTypes.func,
-  onTouchEnd: PropTypes.func,
-  onTouchCancel: PropTypes.func,
-  onFocus: PropTypes.func,
-  onBlur: PropTypes.func,
-  onKeyDown: PropTypes.func,
-};
-
 /**
+ * ## Belle's rating component
+ * The component leverages 5 characters (by default stars) to allow the user to rate.
+ * 
+ * In addition to the props listed below, you can also use tabIndex, style, className, focusStyle, onMouseDown, onMouseUp, onMouseEnter, onMouseMove, onMouseLeave, onTouchStart, onTouchMove, onTouchEnd, onTouchCancel, onFocus, onBlur, onClick, onKeyDown
+ * 
+ * &nbsp;
+ * ## More info
+ * See live [examples](https://gideonshils.github.io/Belle-With-Bit/).
+ * For extended info, go to [Belle](http://nikgraf.github.io/belle/#/component/rating?_k=865mcf) documentation.
+ * 
+ * &nbsp;
+ * ## Standard example
+ * ```js
+ * <Rating defaultValue={3}></Rating>
+ * ```
+ * 
+ * &nbsp;
+ * ## Disabled Rating
+ * ```js
+ * <Rating defaultValue={4} disabled></Rating>
+ * ```
+ * 
+ * &nbsp;
+ * ## Rating with a custom character
+ * ```js
+ * <Rating defaultValue={4} character={'✪'}></Rating>
+ * ```
+ * 
+ * &nbsp;
+ * ## Controlled Rating Component with a Reset Link
+ * Reset rating functionality can be implemented using controlled rating component like this:
+ * ```js
+ * <Rating valueLink={ this.linkState('customRatingValue') } />
+ *
+ * <a onClick={ this._resetRating }
+ *  style={{
+ *    marginLeft: 20,
+ *    position: 'relative',
+ *    top: -5,
+ *    textDecoration: 'underline',
+ *    cursor: 'pointer'
+ *   }}>Reset</a>
+ *
+ * _resetRating() {
+ * this.setState({
+ *   customRatingValue: undefined
+ * });
+ * }
+ * ```
+ * @bit
+ */
+
+ /**
+  * @property {Object} wrapperProps - (optional) This object allows to provide any kind of valid properties for a div tag. It allows to extend the div wrapping the whole rating component.
+  * @property {Object} characterProps - (optional) The property can be used to specify any other properties specific to rating character apart from styling. They will be applied to the span wrapping the character.
+  */
+
+  const ratingPropTypes = {
+    /**
+     * @property {Integer (1-5)} defaultValue - (optional) Behaves like the defaultValue poperty of a native input-tag. The rating can be manipulated through the user interface.
+     */
+    defaultValue: PropTypes.oneOf([1, 2, 3, 4, 5]),
+    /**
+     * @property {Integer (1-5)} value - (optional) Behaves like the value poperty of a native input-tag. The rating can not be manipulated through the user interface.
+     */
+    value: PropTypes.oneOf([1, 2, 3, 4, 5]),
+    /**
+     * @property {ValueReference} valueLink - (optional) Behaves like the valueLink poperty of a native input-tag. ValueLink allows to enable two-way data binding between a state property and the value in the user interface.
+     */
+    valueLink: PropTypes.shape({
+      value: PropTypes.oneOf([1, 2, 3, 4, 5]),
+      requestChange: PropTypes.func.isRequired,
+    }),
+    /**
+     * @property {Boolean} disabled - (optional) Can be used to disable rating component.
+     */
+    disabled: PropTypes.bool,
+    tabIndex: PropTypes.number,
+    /**
+     * @property {Character} character - (optional. default: '★') Rating character used in the component.
+     */
+    character: PropTypes.string,
+    characterProps: PropTypes.object,
+    /**
+     * @property {Boolean} preventFocusStyleForTouchAndClick - (optional. default: true) Prevents the focus style being applied in case the buttons becomes focused by a click or touch.
+     */
+    preventFocusStyleForTouchAndClick: PropTypes.bool,
+    'aria-label': PropTypes.string,
+    style: PropTypes.object,
+    className: PropTypes.string,
+    /**
+     * @property {Object} focusStyle - (optional) The property is used to apply a focus style directly to the wrapper. Works like React's built-in style property except that it extends the properties from the base style.
+     */
+    focusStyle: PropTypes.object,
+    /**
+     * @property {Object} disabledStyle - (optional) The property is used to apply a style directly to the wrapper applied when the component is disabled. Works like React's built-in style property except that it extends the properties from the base style.
+     */
+    disabledStyle: PropTypes.object,
+    /**
+     * @property {Object} hoverStyle - (optional) The property is used to apply a style directly to the wrapper applied when the component is hovered. Works like React's built-in style property except that it extends the properties from the base style.
+     */
+    hoverStyle: PropTypes.object,
+    /**
+     * @property {Object} disabledHoverStyle - (optional) The property is used to apply a style directly to the wrapper applied when the component is disabled and is hovered. Works like React's built-in style property except that it extends the properties from the base style.
+     */
+    disabledHoverStyle: PropTypes.object,
+    /**
+     * @property {Object} characterStyle - (optional) The property can be used to specify styling of set rating values and will be applied to the spans wrapping the characters. Behaves like React's built-in style property.
+     */
+    characterStyle: PropTypes.object,
+    /**
+     * @property {Object} activeCharacterStyle - (optional) The property can be used to specify styling of set rating values when a user touches or presses the rating. These styles will be applied to the spans wrapping the characters. Works like React's built-in style property except that it extends the properties from the base characterStyle.
+     */
+    activeCharacterStyle: PropTypes.object,
+    /**
+     * @property {Object} hoverCharacterStyle - (optional) The property can be used to specify styling of set rating values when a user hover them. These styles will be applied to the spans wrapping the characters. Works like React's built-in style property except that it extends the properties from the base characterStyle.
+     */
+    hoverCharacterStyle: PropTypes.object,
+    /**
+     * @property {Function} onUpdate - (optional) Callback executed when a user changes the rating via the user interface. onUpdate has one argument which is an object containing the value e.g. { value: 3 }.
+     */
+    onUpdate: PropTypes.func,
+    onMouseDown: PropTypes.func,
+    onMouseUp: PropTypes.func,
+    onMouseEnter: PropTypes.func,
+    onMouseMove: PropTypes.func,
+    onMouseLeave: PropTypes.func,
+    onTouchStart: PropTypes.func,
+    onTouchMove: PropTypes.func,
+    onTouchEnd: PropTypes.func,
+    onTouchCancel: PropTypes.func,
+    onFocus: PropTypes.func,
+    onBlur: PropTypes.func,
+    onKeyDown: PropTypes.func,
+  };  
+
+/*
  * sanitize properties for the wrapping div.
  */
 function sanitizeWrapperProps(properties) {
   return omit(properties, Object.keys(ratingPropTypes));
 }
 
-/**
+/*
  * sanitize properties for the character span.
  */
 function sanitizeCharacterProps(properties) {
@@ -61,7 +163,7 @@ function sanitizeCharacterProps(properties) {
   ]);
 }
 
-/**
+/*
  * Injects pseudo classes for styles into the DOM.
  */
 function updatePseudoClassStyle(ratingWrapperStyleId, properties, preventFocusStyleForTouchAndClick) {
@@ -85,7 +187,7 @@ function updatePseudoClassStyle(ratingWrapperStyleId, properties, preventFocusSt
   injectStyles(styles);
 }
 
-/**
+/*
  * Rating component
  *
  * The component leverages 5 characters (by default stars) to allow the user to
@@ -122,7 +224,7 @@ export default class Rating extends Component {
 
   static propTypes = ratingPropTypes;
 
-  /**
+  /*
    * Setting default prop values.
    */
   static defaultProps = {
@@ -132,7 +234,7 @@ export default class Rating extends Component {
     'aria-label': 'rating',
   };
 
-  /**
+  /*
    * Apply pseudo class styling to the wrapper div.
    */
   componentWillMount() {
@@ -166,7 +268,7 @@ export default class Rating extends Component {
     updatePseudoClassStyle(this.ratingWrapperStyleId, properties, this.preventFocusStyleForTouchAndClick);
   }
 
-  /**
+  /*
    * Removes pseudo classes from the DOM once component gets removed.
    */
   componentWillUnmount() {
@@ -176,7 +278,7 @@ export default class Rating extends Component {
     }
   }
 
-  /**
+  /*
    * As soon as the mouse enters the component the focusedValue is updated based
    * on the value of the targeted span.
    */
@@ -206,7 +308,7 @@ export default class Rating extends Component {
     }
   };
 
-  /**
+  /*
    * As the mouse moved over the component and enters a new star the focusedValue
    * is updated based on the value of the targeted span.
    */
@@ -225,7 +327,7 @@ export default class Rating extends Component {
     }
   };
 
-  /**
+  /*
    * Resets the component as the mouse leaves the hover area.
    */
   _onMouseLeave = (event) => {
@@ -245,7 +347,7 @@ export default class Rating extends Component {
     }
   };
 
-  /**
+  /*
    * Sets isActive state to true.
    */
   _onMouseDown = (event) => {
@@ -259,7 +361,7 @@ export default class Rating extends Component {
     }
   };
 
-  /**
+  /*
    * Sets isActive state to false.
    */
   _onMouseUp = (event) => {
@@ -281,7 +383,7 @@ export default class Rating extends Component {
     this.setState({ isActive: false });
   };
 
-  /**
+  /*
    * Change focusValue and sets isActive state to true.
    */
   _onTouchStart = (event) => {
@@ -300,7 +402,7 @@ export default class Rating extends Component {
     }
   };
 
-  /**
+  /*
    * set the focusedValue depending on mouse position
    */
   _onTouchMove = (event) => {
@@ -328,7 +430,7 @@ export default class Rating extends Component {
     }
   };
 
-  /**
+  /*
    * update the component when touch ends
    */
   _onTouchEnd = (event) => {
@@ -344,7 +446,7 @@ export default class Rating extends Component {
     }
   };
 
-  /**
+  /*
    * reset the component in case of touch cancel
    */
   _onTouchCancel = (event) => {
@@ -360,7 +462,7 @@ export default class Rating extends Component {
     }
   };
 
-  /**
+  /*
    * reset the component on blur
    */
   _onBlur = (event) => {
@@ -377,7 +479,7 @@ export default class Rating extends Component {
     }
   };
 
-  /**
+  /*
    * enable focus styling of component when tab is used to focus component
    */
   _onFocus = () => {
@@ -390,7 +492,7 @@ export default class Rating extends Component {
     }
   };
 
-  /**
+  /*
    * Manages the keyboard events.
    *
    * In case the Rating Component is in focus Space, ArrowUp will result in increasing the value and arrow down will result in decreasing the value.
@@ -421,7 +523,7 @@ export default class Rating extends Component {
     }
   };
 
-  /**
+  /*
    * decrease the value by 1 when arrow down key is pressed
    */
   _onArrowDownKeyDown = () => {
@@ -432,7 +534,7 @@ export default class Rating extends Component {
     });
   };
 
-  /**
+  /*
    * increase value by 1 when arrow up key is pressed
    */
   _onArrowUpKeyDown = () => {
@@ -450,7 +552,7 @@ export default class Rating extends Component {
     });
   };
 
-  /**
+  /*
    * set component value to current focus value
    */
   _onEnterSpaceKeyDown = () => {
@@ -466,7 +568,7 @@ export default class Rating extends Component {
     }
   };
 
-  /**
+  /*
    * reset component when escape key is pressed
    * esc key should just reset the component displayed rating without removing hover or focus styles
    */
@@ -476,7 +578,7 @@ export default class Rating extends Component {
     });
   };
 
-  /**
+  /*
    * Returns current value of rating to be displayed on the component
    */
   _getCurrentValue() {
@@ -490,7 +592,7 @@ export default class Rating extends Component {
     return value;
   }
 
-  /**
+  /*
    * The function will be passed to requestAnimationFrame for touchMove
    */
   _triggerComponentUpdateOnTouchMove(touches) {
@@ -503,7 +605,7 @@ export default class Rating extends Component {
     }
   }
 
-  /**
+  /*
    * update component when component is clicked, touch ends, enter or space key are hit
    * different update logic will apply depending on whether component has property defaultValue, value or valueLink specified
    */
@@ -532,7 +634,7 @@ export default class Rating extends Component {
     }
   }
 
-  /**
+  /*
    * Returns the HTML function to be rendered by this component.
    */
   render() {

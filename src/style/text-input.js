@@ -1,3 +1,22 @@
+/**
+ * ## Used for styling the Belle Spinner component
+ * 
+ * Belle provides you with the ability to modify the default appearance of its components.
+ * 
+ * With this example you overwrite the focus style of default Belle TextInput Component
+ * ```js
+ * import TextInputStyle from 'bit/style/text-input-style';
+ * 
+ * TextInputStyle.focusStyle = {
+ *  outline: 0, // to avoid default focus behaviour
+*   borderBottom: '2px solid #6FA8D1',
+ * }
+ * ```
+ * 
+ * For extended information see the Belle [documentation](http://nikgraf.github.io/belle/#/configuration?_k=pbr5zm)
+ * @bit
+ */
+
 const textInputStyle = {
   style: {
     /* normalize.css v3.0.1 */

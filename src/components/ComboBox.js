@@ -1,23 +1,258 @@
 import React, { Component, PropTypes } from 'react';
 import { injectStyles, removeAllStyles } from '../utils/inject-style';
 import unionClassNames from '../utils/union-class-names';
-import { omit, filterReactChildren, has, isEmpty, find, getArrayForReactChildren, uniqueId } from '../utils/helpers';
+import omit from '../utils/helpers/omit';
+import filterReactChildren from '../utils/helpers/filterReactChildren';
+import has from '../utils/helpers/has';
+import isEmpty from '../utils/helpers/isEmpty';
+import find from '../utils/helpers/find';
+import uniqueId from '../utils/helpers/uniqueId';
+import getArrayForReactChildren from '../utils/helpers/getArrayForReactChildren';
+
 import style from '../style/combo-box';
 import ComboBoxItem from '../components/ComboBoxItem';
 
+/**
+ * ## Belle's combo box component
+ * In addition to the props listed below, you can also use any any other property valid for an input element like placeholder, onFocus, onBlur, …
+ * 
+ * &nbsp;
+ * ## More info
+ * See live [examples](https://gideonshils.github.io/Belle-With-Bit/).
+ * 
+ * For extended info, go to [Belle](http://nikgraf.github.io/belle/#/component/combo-box?_k=qn85nx) documentation.
+ * 
+ * &nbsp;
+ * ## onUpdate has one argument which is an object containing 4 fields:
+ * 1. value, the value of the combo-box.
+ * 2. identifier, identifier of the matching option (optional). This is passed only if the options have identifiers and the value of the combo-box exactly matches one of the options.
+ * 3. isOptionSelection, true when combo-box is updated by user selecting an option (point:1 above).
+ * 4. isMatchingOption, true when value of combo-box exactly matches one of the options, irrespective of how the user entered it.
+ * ```js
+ * {
+ * value: value string,
+ * identifier: identifier of the type you passed,
+ * isMatchingOption: true/false,
+ * isOptionSelection: true/false
+ * }
+ * ```
+ * 
+ * &nbsp;
+ * ## Standard example
+ * ```js
+ * <ComboBox placeholder="Choose a State">
+ * <Option value="Alabama">Alabama</Option>
+ * <Option value="Alaska">Alaska</Option>
+ * <Option value="Arizona">Arizona</Option>
+ * <Option value="Arkansas">Arkansas</Option>
+ * </ComboBox>
+ * ```
+ * &nbsp;
+ * ## Internal HTML Structure
+ * This should help developer to understand how the ComboBox is structured in order to use the API
+ * ```js
+ * <div style={ wrapperStyle }>
+ * <input style={ hintStyle } />
+ * <input style={ style } />
+ * <span style={ caretToCloseStyle or caretToOpenStyle } />
+ * </span>
+ *   <ul style={ menuStyle }>
+ *   <li>
+ *     <Option />
+ *   </li>
+ *   <li>
+ *     <Option />
+ *   </li>
+ *   … more entries …
+ * </ul>
+ * </div>
+ * ```
+ * 
+ * &nbsp;
+ * ## ComboBox with a caret and each option having an image & description
+ * ```js
+ * <!-- defining the data -->
+ * const animals = [
+ * {name: 'Abyssinian', description: 'The oldest breed of cat in the world!', image: 'images/abyssinian.jpg'},
+ * {name: 'Albatross', description: 'The largest wingspan of any bird!', image: 'images/albatross.jpg'},
+ * {name: 'Angelfish', description: 'There are 100 different species!', image: 'images/angelfish.jpg'},
+ * {name: 'Ant', description: 'First evolved 100 million years ago!', image: 'images/ant.jpg'},
+ * {name: 'Antelope', description: 'Renew their horns every year!', image: 'images/antelope.jpg'},
+ * {name: 'Asian Elephant', description: 'Domesticated for hundreds of years!', image: 'images/asian_elephant.jpg'},
+ * ]
+ * ```
+ * ```js
+ * <ComboBox placeholder = { 'Choose an Animal' }
+ *             defaultValue = "Ant"
+ *             displayCaret = { true }>
+ * {
+ *   animals.map(function(animal, index) {
+ *     return (
+ *       <Option value={ animal.name }
+ *               style={{
+ *                 padding: '5px 0 5px 60px',
+ *                 marginBottom: '5px',
+ *                 height: 50,
+ *                 background:  'url(' + animal.image + ') no-repeat',
+ *                 backgroundSize: '50px 50px',
+ *               }}
+ *               hoverStyle={{
+ *                 padding: '5px 0 5px 60px',
+ *                 marginBottom: '5px',
+ *                 height: 50,
+ *                 background:  'url(' + animal.image + ') no-repeat',
+ *                 backgroundSize: '50px 50px',
+ *                 backgroundColor: '#FFE95D',
+ *              }}
+ *               key={ index }>
+ *         <span>
+ *           <div style={{fontWeight: 'bold', fontSize: '14px'}}>
+ *             { animal.name }
+ *           </div>
+ *           <div style={{fontSize: '12px'}}>
+ *             { animal.description }
+ *           </div>
+ *         </span>
+ *       </Option>
+ *     );
+ *   })
+ * }
+ * </ComboBox>
+ * ```
+ * 
+ * &nbsp;
+ * ## ComboBox only logging in case of an exact match of the passed Options
+ * ```js
+ * const destinations = [
+ * {code: '1', name: 'Marrakech, Morocco'},
+ * {code: '2', name: 'Siem Reap, Cambodia'},
+ * {code: '3', name: 'Istanbul, Turkey'},
+ * {code: '4', name: 'Hanoi, Vietnam'},
+ * {code: '5', name: 'Prague, Czech Republic'},
+ * ...
+ * ];
+ * ```
+ * ```js
+ * <ComboBox placeholder = { 'Choose a Destination' }
+ *         menuStyle = {{maxHeight: 250, overflow: 'scroll'}}
+ *         onUpdate={ (event) => {
+ *           if (event.isMatchingOption) {
+ *             console.log(event.identifier);
+ *           }
+ *         }}>
+ * {
+ *   destinations.map((destination, index) => {
+ *     return (
+ *       <Option value={ destination.name }
+ *               identifier={ destination.code }
+ *               key={ index }>
+ *           { destination.name }
+ *       </Option>
+ *     );
+ *   })
+ * }
+ * </ComboBox>
+ * ```
+ * 
+ * &nbsp;
+ * ## ComboBox with options with identifier, onUpdate callback & maxOptions set to 5
+ * ```
+ * const currencies = [
+ * {code: 'AUD', name: 'Australia Dollar'},
+ * {code: 'BRL', name: 'Brazil Real'},
+ * {code: 'CAD', name: 'Canada Dollar'},
+ * {code: 'CNY', name: 'China Yuan Renminbi'},
+ * {code: 'CRC', name: 'Costa Rica Colon'},
+ * ...
+ * ];
+ * ```
+ * ```js
+ * <ComboBox placeholder = { 'Choose a Currency' }
+ *             onUpdate={ (event) => {
+ *               console.log(event.value);
+ *               console.log(event.identifier);
+ *               console.log(event.isMatchingOption);
+ *               console.log(event.isOptionSelection); }}
+ *             maxOptions = { 5 }>
+ * {
+ *   currencies.map((currency, index) => {
+ *     return (
+ *       <Option value={ currency.name }
+ *               identifier={ currency.code }
+ *               key={ index }>
+ *         { currency.name }
+ *       </Option>
+ *     );
+ *   })
+ * }
+ * </ComboBox>
+ * ```
+ * 
+ * &nbsp;
+ * ## ComboBox with custom filtering, and hints enabled
+ * ```js
+ * const babyNames = ['Palma', 'Paloma', 'Pamella', 'Paris', 'Patti', 'Paulina', 'Pearl', 'Pearlie'];
+ * ```
+ * ```js
+ * <ComboBox enableHint
+ *         filterFunc = { customFilterFunc }
+ *         placeholder = { 'Select Baby Name' }>
+ * {
+ *   babyNames.map(function(name, index) {
+ *     return (
+ *       <Option value={ name }
+ *               key={ index }>
+ *         { name }
+ *       </Option>
+ *     );
+ *   })
+ * }
+ * </ComboBox>
+ * ```
+ * @bit
+ */
+
 const comboBoxPropTypes = {
   children: PropTypes.oneOfType([PropTypes.array, PropTypes.object]),
+  /**
+   * @property {String | Boolean | Number} defaultValue - (optional) Behaves like the defaultValue property of a native input-tag. This value will be the initial value of the combo-box and can be manipulated through the user interface.
+   */
   defaultValue: PropTypes.string,
+  /**
+   * @property {String | Boolean | Number} value - (optional) Behaves like the value property of a native input-tag. This value will be the initial value of the combo-box and can not be manipulated through the user interface.
+   */
   value: PropTypes.string,
+  /**
+   * @property {ValueReference} valueLink - (optional) Behaves like the valueLink property of a native input-tag. ValueLink allows to enable two-way data binding between a state property and the value in the user interface.
+   */
   valueLink: PropTypes.shape({
     value: PropTypes.string,
     requestChange: PropTypes.func.isRequired,
   }),
   placeholder: PropTypes.string,
+  /**
+   * @property {Boolean} disabled - (default: false) If true the combo-box will be disabled and can't be changed by the user.
+   */
   disabled: PropTypes.bool,
+  /**
+   * @property {Object} wrapperProps - (optional) This object allows to provide any kind of valid properties for a div tag. It allows to extend the div wrapping the whole combo-box component. 
+   */
   wrapperProps: PropTypes.object,
+  /**
+   * @property {Object} menuProps - (optional) This object allows to provide any kind of valid properties for a ul tag. It allows to extend the ul wrapping the available options.
+   */
   menuProps: PropTypes.object,
+  /**
+   * @property {Object} caretProps - (optional) This object allows to provide any kind of valid properties for a span tag.
+   */
   caretProps: PropTypes.object,
+  /**
+   * @property {Function} onUpdate - (optional) This callback is executed every time the combo-box value changes. This could happen when:
+   * &nbsp; 1. user selects an option.
+   * &nbsp; 2. user types value (function will be called on each keypress).
+   * &nbsp; 3. user paste some value.
+   * &nbsp; 4. if hints are enabled and user hits right-arrow key on keyboard.
+   */
   onUpdate: PropTypes.func,
   onInputMatch: PropTypes.func,
   tabIndex: PropTypes.number,
@@ -27,24 +262,65 @@ const comboBoxPropTypes = {
   className: PropTypes.string,
   caretClassName: PropTypes.string,
   style: PropTypes.object,
+  /**
+   * @property {Object} wrapperStyle - (optional) Works like React's built-in style property. Manipulates the styling for the div-tag wrapped around the component.
+   */
   wrapperStyle: PropTypes.object,
+  /**
+   * @property {Object} hintStyle - (optional) Works like React's built-in style property. Manipulates the styling for underlying input which is suggesting the first option. This input is only visible if the property `enableHint` is enabled.
+   */
   hintStyle: PropTypes.object,
+  /**
+   * @property {Object} menuStyle - (optional) Works like React's built-in style property. Manipulates the styling for the ul-tag wrapped around the options.
+   */
   menuStyle: PropTypes.object,
+  /**
+   * @property {Object} focusStyle - (optional) Works like React's built-in style property except that it extends the properties from the base style. Becomes active once the combo-box is the element focused in the DOM.
+   */
   focusStyle: PropTypes.object,
+  /**
+   * @property {Object} disabledStyle - (optional) Works like React's built-in style property except that it extends the properties from the base style. Becomes active once the combo-box is disabled.
+   */
   disabledStyle: PropTypes.object,
+  /**
+   * @property {Object} disabledHoverStyle - (optional) Works like React's built-in style property except that it extends the properties from the base disabledStyle. Becomes active once the combo-box is disabled and a user hovers over it.
+   */
   disabledHoverStyle: PropTypes.object,
+  /**
+   * @property {Object} hoverStyle - (optional) Works like React's built-in style property except that it extends the properties from the base style. Becomes active once the user hovers over the combo-box with the cursor.
+   */
   hoverStyle: PropTypes.object,
+  /**
+   * @property {Object} caretToOpenStyle - (optional) Works like React's built-in style property. Manipulates the styling for the caret when the options to combo-box are not visible.
+   */
   caretToOpenStyle: PropTypes.object,
+  /**
+   * @property {Object} caretToCloseStyle - (optional) Works like React's built-in style property. Manipulates the styling for the caret when the options to combo-box are visible.
+   */
   caretToCloseStyle: PropTypes.object,
+  /**
+   * @property {Object} disabledCaretToOpenStyle - (optional) Works like React's built-in style property except that it extends the properties from the base disabledCaretToOpenStyle. Is applied to the Caret once the combo-box is disabled.
+   */
   disabledCaretToOpenStyle: PropTypes.object,
   maxOptions: PropTypes.number,
+  /**
+   * @property {Object} displayCaret - (default: false) Can be used to show/hide the caret that appears inside combo-box.
+   */
   displayCaret: PropTypes.bool,
+  /**
+   * @property {Object} enableHint - (default: false) Can be used to enable/disable showing hints to users in combo-box.
+   */
   enableHint: PropTypes.bool,
+  /**
+   * @property {Object} filterFunc - (optional) By default the options to be shown to the user are filtered using simple case-insensitive comparison, to find occurrence of input string in option value. But using this property developer can provide a custom function for filtering using. The function should expect to receive 2 parameters:
+   * &nbsp; 1. String input in the combo-box 
+   * &nbsp; 2. Value of the selected option
+   */
   filterFunc: PropTypes.func,
   'aria-label': PropTypes.string,
 };
 
-/**
+/*
  * Update hover style for the specified styleId.
  *
  * @param styleId {string} - a unique id that exists as class attribute in the DOM
@@ -94,7 +370,7 @@ function updatePseudoClassStyle(styleId, caretStyleId, properties) {
   injectStyles(styles);
 }
 
-/**
+/*
  * Returns an object with properties that are relevant for the wrapper div.
  */
 function sanitizeWrapperProps(properties) {
@@ -105,14 +381,14 @@ function sanitizeWrapperProps(properties) {
   ]);
 }
 
-/**
+/*
  * Returns an object with properties that are relevant for the input box.
  */
 function sanitizeInputProps(properties) {
   return omit(properties, Object.keys(comboBoxPropTypes));
 }
 
-/**
+/*
  * Returns an object with properties that are relevant for the wrapping div of
  * the selected option.
  */
@@ -125,7 +401,7 @@ function sanitizeCaretProps(properties) {
   ]);
 }
 
-/**
+/*
  * Returns an object with properties that are relevant for the combo-box menu.
  */
 function sanitizeMenuProps(properties) {
@@ -136,7 +412,7 @@ function sanitizeMenuProps(properties) {
   ]);
 }
 
-/**
+/*
  * Default function used for filtering options.
  */
 function filterFunc(inputValue, optionValue) {
@@ -147,7 +423,7 @@ function filterFunc(inputValue, optionValue) {
   return false;
 }
 
-/**
+/*
  * ComboBox React Component.
  */
 export default class ComboBox extends Component {
@@ -212,7 +488,7 @@ export default class ComboBox extends Component {
     };
   }
 
-  /**
+  /*
    * This method will calculate the hint that should be present in comboBox at some point in time. Rules:
    * 1. If menu is not open hint is undefined
    * 2. If menu is open but there are no filteredOptions hint is undefined
@@ -254,7 +530,7 @@ export default class ComboBox extends Component {
     return undefined;
   }
 
-  /**
+  /*
    * Generates the style-id & inject the focus & hover style.
    */
   componentWillMount() {
@@ -288,14 +564,14 @@ export default class ComboBox extends Component {
     updatePseudoClassStyle(this._styleId, this._caretStyleId, properties);
   }
 
-  /**
+  /*
    * Remove a component's associated styles whenever it gets removed from the DOM.
    */
   componentWillUnmount() {
     removeAllStyles([this._styleId, this._caretStyleId]);
   }
 
-  /**
+  /*
    * Update focusedOptionIndex when an option is touched.
    */
   _onTouchStartAtOption = (event, index) => {
@@ -305,7 +581,7 @@ export default class ComboBox extends Component {
     }
   };
 
-  /**
+  /*
    * Triggers a change event after the user touched on an Option.
    */
   _onTouchEndAtOption = (event, index) => {
@@ -319,7 +595,7 @@ export default class ComboBox extends Component {
     }
   };
 
-  /**
+  /*
    * Update focusedOptionIndex to undefined on touch cancel.
    */
   _onTouchCancelAtOption = () => {
@@ -329,7 +605,7 @@ export default class ComboBox extends Component {
     }
   };
 
-  /**
+  /*
    * Closed opened combo-box options and removed focusStyles on blur.
    */
   _onBlur = (event) => {
@@ -345,7 +621,7 @@ export default class ComboBox extends Component {
     }
   };
 
-  /**
+  /*
    * Set focused state when element is focused.
    */
   _onFocus = (event) => {
@@ -360,7 +636,7 @@ export default class ComboBox extends Component {
     }
   };
 
-  /**
+  /*
    * Open/ Close menu when create is clicked.
    */
   _onCaretClick = () => {
@@ -372,7 +648,7 @@ export default class ComboBox extends Component {
     }
   };
 
-  /**
+  /*
    * Update focusedOptionIndex for component when mouse enters an option.
    */
   _onMouseEnterAtOption = (index) => {
@@ -383,7 +659,7 @@ export default class ComboBox extends Component {
     }
   };
 
-  /**
+  /*
    * Set focusedOptionIndex to undefined.
    */
   _onMouseLeaveAtOption = () => {
@@ -394,7 +670,7 @@ export default class ComboBox extends Component {
     }
   };
 
-  /**
+  /*
    * Update component value when an option is clicked.
    */
   _onClickAtOption = (index) => {
@@ -403,7 +679,7 @@ export default class ComboBox extends Component {
     }
   };
 
-  /**
+  /*
    * Handle keyDown in input (when input is focused):
    * 1. ComboBox is closed and ArrowDown/ ArrowUp is pressed -> open the ComboBox
    * 2. ComboBox is opened and ArrowDown is pressed -> highlight next option
@@ -459,7 +735,7 @@ export default class ComboBox extends Component {
     }
   };
 
-  /**
+  /*
    * Highlight next option when arrowDown key is pressed.
    * Highlight first option if currently last option is focused.
    */
@@ -474,7 +750,7 @@ export default class ComboBox extends Component {
     });
   };
 
-  /**
+  /*
    * Highlight previous option when arrowUp key is pressed.
    * Highlight last option if currently first option is focused.
    */
@@ -491,7 +767,7 @@ export default class ComboBox extends Component {
     }
   }
 
-  /**
+  /*
    * Update value of Input box to the value of highlighted option.
    */
   _onEnterOrTabKeyDown() {
@@ -500,14 +776,14 @@ export default class ComboBox extends Component {
     }
   }
 
-  /**
+  /*
    * The function will return options (if any) who's value is same as value of the combo-box input.
    */
   _findMatch(value) {
     return find(this.filteredOptions, (entry) => entry.props.value === value);
   }
 
-  /**
+  /*
    * The function is called when user selects an option. Function will do following:
    * 1. Close the options
    * 2. Change value of input depending on whether its has value, defaultValue or valueLink property
@@ -543,7 +819,7 @@ export default class ComboBox extends Component {
     }
   }
 
-  /**
+  /*
    * The function is called when user type/ paste value in the input box.
    */
   _onChange = (event) => {
@@ -551,14 +827,14 @@ export default class ComboBox extends Component {
     this._userUpdateValue(value);
   };
 
-  /**
+  /*
    * Returns the value of the child with a certain index.
    */
   _getValueForIndex(index) {
     return this.filteredOptions[index].props.value;
   }
 
-  /**
+  /*
    * The function is called when user inputs a value in the input box. This can be done by:
    * 1. typing/ pasting value into input box
    * 2. pressing arrowRight key when there is some hint in the input box
@@ -602,7 +878,7 @@ export default class ComboBox extends Component {
     }
   }
 
-  /**
+  /*
    * Function to filter options using input value.
    */
   static filterOptions(inputValue, properties) { /* eslint react/sort-comp:0*/

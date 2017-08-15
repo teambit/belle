@@ -1,9 +1,9 @@
 import React, { Component, PropTypes } from 'react';
 
 /**
- * Belle internal component to wrap an Option in a Select.
- *
- * This component exists to avoid binding functions in JSX.
+ * ## SelectItem Component
+ * Belle internal component to wrap an Option in a Select. This component exists to avoid binding functions in JSX.
+ * @bit
  */
 export default class SelectItem extends Component {
 

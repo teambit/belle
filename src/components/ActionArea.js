@@ -1,6 +1,23 @@
 import React, { Component, PropTypes } from 'react';
 import actionAreaStyle from '../style/actionArea';
-import { omit } from '../utils/helpers';
+import omit from '../utils/helpers/omit';
+
+/**
+ * ## Belle's ActionArea component. Used internally.
+ * 
+ * Provides a button like behaviour for a click like interaction within other components. Button can't be used in such
+ * cases as it always will have it's own focus which is not desired in
+ * components like DatePicker e.g. next month button.
+ * 
+ * Note: Use the ActionArea's onUpdate instead of onClick as otherwise on iOS9
+ * 
+ * The ActionArea will trigger onFocus for it's parent with a set tabindex.
+ * 
+ * &nbsp;
+ * ## More info
+ * See live [examples](https://gideonshils.github.io/Belle-With-Bit/)
+ * @bit
+ */
 
 const actionAreaPropTypes = {
   activeStyle: PropTypes.object,
@@ -27,7 +44,7 @@ function sanitizeChildProps(properties) {
   return omit(properties, Object.keys(actionAreaPropTypes));
 }
 
-/**
+/*
  * ActionArea
  *
  * The purpose of this component is to provide a button like behaviour for a
@@ -60,14 +77,14 @@ export default class ActionArea extends Component {
     isHovered: false,
   };
 
-  /**
+  /*
    * Update the childProps based on the updated properties passed to the card.
    */
   componentWillReceiveProps(properties) {
     this.childProps = sanitizeChildProps(properties);
   }
 
-  /**
+  /*
    * As soon as the mouse enters the component the isHovered state is activated.
    *
    * The state isHovered is not set to true in case onMouseEnter was triggered
@@ -86,7 +103,7 @@ export default class ActionArea extends Component {
     }
   };
 
-  /**
+  /*
    * Deactivate the isHovered state.
    */
   _onMouseLeave = (event) => {
@@ -99,7 +116,7 @@ export default class ActionArea extends Component {
     }
   };
 
-  /**
+  /*
    * Activates the active state in case the main mouse button was pressed.
    */
   _onMouseDown = (event) => {
@@ -114,7 +131,7 @@ export default class ActionArea extends Component {
     }
   };
 
-  /**
+  /*
    * Triggers onUpdate in case the mouse button was pressed on this element.
    *
    * In addition the active state is deactivated.
@@ -131,7 +148,7 @@ export default class ActionArea extends Component {
     }
   };
 
-  /**
+  /*
    * Updates the button to be active and makes sure the next onMouseEnter is
    * ignored.
    */
@@ -148,7 +165,7 @@ export default class ActionArea extends Component {
     }
   };
 
-  /**
+  /*
    * Triggers onUpdate in case the touch event started on this element and makes
    * sure the next onMouseEnter is ignored.
    */
@@ -163,7 +180,7 @@ export default class ActionArea extends Component {
     }
   };
 
-  /**
+  /*
    * Updates the button to be release and makes sure the next onMouseEnter is
    * ignored.
    */

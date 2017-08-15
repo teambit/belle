@@ -1,25 +1,122 @@
 import React, { Component, PropTypes } from 'react'; // eslint-disable-line no-unused-vars
-import { has, omit, uniqueId } from '../utils/helpers';
+import has from '../utils/helpers/has';
+import omit from '../utils/helpers/omit';
+import uniqueId from '../utils/helpers/uniqueId';
 import buttonStyle from '../style/button';
 import unionClassNames from '../utils/union-class-names';
 import { injectStyles, removeStyle } from '../utils/inject-style';
 import config from '../config/button';
 
+/**
+ * ## Belle's button component
+ * 
+ * Note: Belle's Button is rendered as normal HTML button and behaves exactly like it except for these behaviours:
+ * * By default every button is of type="button" instead of "submit"
+ * 
+ * In addition to the props listed below, you can also use any any other property valid for a HTML button like style, onClick, …
+ * 
+ * &nbsp;
+ * ## More info
+ * See live [examples](https://gideonshils.github.io/Belle-With-Bit/).
+ * 
+ * For extended info, go to [Belle](http://nikgraf.github.io/belle/#/component/button?_k=3h2bg1) documentation.
+ * 
+ * &nbsp;
+ * ## Standard example
+ * ```js
+ * <!-- primary button -->
+ * <Button primary>Follow</Button>
+ * 
+ * <!-- default button -->
+ * <Button>Follow</Button>
+ * ```
+ * 
+ * &nbsp;
+ * ## Disabled buttons
+ * ```js
+ * <Button primary style={{marginRight: 10}}>Follow</Button>
+ *
+ * <Button primary disabled style={{marginRight: 10}}>Follow</Button>
+ * 
+ * <Button style={{marginRight: 10}}>Follow</Button>
+ * 
+ * <Button disabled>Follow</Button>
+ * ```
+ * 
+ * &nbsp;
+ * ## Primary button with custom styles
+ * ```js
+ * <Button primary
+ *    style={{
+ *      marginRight: 10,
+ *      color: '#222',
+ *      border: '1px solid #222',
+ *      borderBottom: '1px solid #222',
+ *      borderRadius: 2,
+ *      background: '#fff',
+ *    }}
+ *    hoverStyle={{
+ *      border: '1px solid red',
+ *      borderBottom: '1px solid red',
+ *      color: '#red',
+ *      background: '#fff',
+ *    }}
+ *    focusStyle={{
+ *      border: '1px solid red',
+ *      borderBottom: '1px solid red',
+ *      color: '#red',
+ *      background: '#fff',
+ *      boxShadow: 'red 0px 0px 5px',
+ *    }}
+ *    activeStyle={{
+ *      border: '1px solid red',
+ *      borderTop: '1px solid red',
+ *      color: '#000',
+ *      background: '#fff',
+ *    }}>
+ *  Follow
+ * </Button>
+ * ```
+ * @bit
+ */
+
+
 const buttonTypes = ['button', 'submit', 'reset']; // eslint-disable-line no-unused-vars
 
 const buttonPropTypes = {
+  /**
+   * @property {Object} activeStyle - (optional) Works like React's built-in style property except that it extends the properties from the base style. Becomes active once the button is pressed by a user, but yet not release.
+   */
   activeStyle: PropTypes.object,
   children: PropTypes.oneOfType([
     PropTypes.arrayOf(PropTypes.node),
     PropTypes.node,
   ]),
   className: PropTypes.string,
+  /**
+   * @property {Boolean} disabled - (default: false) If true the Button will be disabled and can't be pressed by a user.
+   */
   disabled: PropTypes.bool,
+  /**
+   * @property {'button' | 'submit' | 'reset'} type - (default: 'button') This button by is set to type 'button' by default. This different to the default behavior in HTML where a button would submit in case the 'type' attribute is not defined.
+   */
   type: PropTypes.oneOf(buttonTypes),
   style: PropTypes.object,
+  /**
+   * @property {Object} focusStyle - (optional) Works like React's built-in style property except that it extends the properties from the base style. Becomes active once the button is the element focused in the DOM.
+   */
   focusStyle: PropTypes.object,
+  /**
+   * @property {Object} hoverStyle - (optional) Works like React's built-in style property. Becomes active once the user hovers over the button with the cursor.
+   */
   hoverStyle: PropTypes.object,
+  /**
+   * @property {Object} disabledStyle - (optional) Works like React's built-in style property except that it extends the properties from the base style. Becomes active once the button is disabled.
+   */
   disabledStyle: PropTypes.object,
+  /**
+   * @property {Object} disabledHoverStyle - (optional) Works like React's built-in style property except that it extends the properties from the base disabledStyle. Becomes active once the button is disabled and a user hovers over it.
+   */
   disabledHoverStyle: PropTypes.object,
   onTouchStart: PropTypes.func,
   onTouchEnd: PropTypes.func,
@@ -29,11 +126,17 @@ const buttonPropTypes = {
   onMouseLeave: PropTypes.func,
   onFocus: PropTypes.func,
   onBlur: PropTypes.func,
+  /**
+   * @property {Boolean} preventFocusStyleForTouchAndClick (optional) (default: true) - Prevents the focus style being applied in case the buttons becomes focused by a click or touch.
+   */
   preventFocusStyleForTouchAndClick: PropTypes.bool,
+  /**
+   * @property {Boolean} primary - (default: false) If true the Button will be appear with the primary button styles.
+   */
   primary: PropTypes.bool,
 };
 
-/**
+/*
  * Returns an object with properties that are relevant for the button element.
  *
  * In case a wrong or no type is defined the type of the child button will be
@@ -43,7 +146,7 @@ function sanitizeChildProps(properties) {
   return omit(properties, Object.keys(buttonPropTypes));
 }
 
-/**
+/*
  * Update hover, focus & active style for the speficied styleId.
  *
  * @param styleId {string} - a unique id that exists as class attribute in the DOM
@@ -97,7 +200,7 @@ function updatePseudoClassStyle(styleId, properties, preventFocusStyleForTouchAn
   injectStyles(styles);
 }
 
-/**
+/*
  * Button component
  *
  * The button behaves exactly like a normal html button except:
@@ -147,7 +250,7 @@ export default class Button extends Component {
     type: 'button',
   };
 
-  /**
+  /*
    * Generates the style-id & inject the focus & active style.
    */
   componentWillMount() {
@@ -155,7 +258,7 @@ export default class Button extends Component {
     updatePseudoClassStyle(this.styleId, this.props, this.preventFocusStyleForTouchAndClick);
   }
 
-  /**
+  /*
    * Update the childProps based on the updated properties of the button.
    */
   componentWillReceiveProps(properties) {
@@ -168,7 +271,7 @@ export default class Button extends Component {
     updatePseudoClassStyle(this.styleId, properties, this.preventFocusStyleForTouchAndClick);
   }
 
-  /**
+  /*
    * Deactivate the focused attribute in order to make sure the focus animation
    * only runs once when the component is focused on & not after re-rendering
    * e.g when the user clicks the button.
@@ -178,14 +281,14 @@ export default class Button extends Component {
     this.mouseDownOnButton = false;
   }
 
-  /**
+  /*
    * Remove a component's associated styles whenever it gets removed from the DOM.
    */
   componentWillUnmount() {
     removeStyle(this.styleId);
   }
 
-  /**
+  /*
    * Activate the focused attribute used to determine when to show the
    * one-time focus animation and trigger a render.
    */
@@ -198,7 +301,7 @@ export default class Button extends Component {
     }
   };
 
-  /**
+  /*
    * Deactivate the focused attribute used to determine when to show the
    * one-time focus animation and trigger a render.
    */
@@ -221,7 +324,7 @@ export default class Button extends Component {
     }
   };
 
-  /**
+  /*
    * Updates the button to be pressed.
    */
   _onTouchStart = (event) => {
@@ -237,7 +340,7 @@ export default class Button extends Component {
     }
   };
 
-  /**
+  /*
    * Updates the button to be release.
    */
   _onTouchEnd = (event) => {
@@ -251,7 +354,7 @@ export default class Button extends Component {
     }
   };
 
-  /**
+  /*
    * Updates the button to be release.
    */
   _onTouchCancel = (event) => {
@@ -265,7 +368,7 @@ export default class Button extends Component {
     }
   };
 
-  /**
+  /*
    * As soon as the mouse enters the component the isHovered state is activated.
    */
   _onMouseEnter = (event) => {
@@ -281,7 +384,7 @@ export default class Button extends Component {
     }
   };
 
-  /**
+  /*
    * Deactivate the isHovered state.
    */
   _onMouseLeave = (event) => {

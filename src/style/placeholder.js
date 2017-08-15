@@ -1,3 +1,22 @@
+/**
+ * ## Used for styling the Belle Placeholder component
+ * 
+ * Belle provides you with the ability to modify the default appearance of its components.
+ * 
+ * With this example you overwrite the disabled style of default Belle Placeholder Component
+ * ```js
+ * import PlaceholderStyle from 'bit/style/placeholder-style';
+ * 
+ * PlaceholderStyle.disabledStyle = {
+ *  color: '#6FA8D1',
+ *  cursor: 'not-allowed',
+ * }
+ * ```
+ * 
+ * For extended information see the Belle [documentation](http://nikgraf.github.io/belle/#/configuration?_k=pbr5zm)
+ * @bit
+ */
+
 const placeholderStyle = {
   style: {
     boxSizing: 'border-box',

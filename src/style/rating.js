@@ -1,3 +1,23 @@
+ /**
+ * ## Used for styling the Belle Rating component
+ * 
+ * Belle provides you with the ability to modify the default appearance of its components.
+ * 
+ * With this example you overwrite the disabled style of default Belle Rating Component
+ * ```js
+ * import RatingStyle from 'bit/style/rating-style';
+ * 
+ * RatingStyle.disabledStyle = {
+ *  opacity: 0.1,
+ *  cursor: 'not-allowed',
+ * }
+ * ```
+ * 
+ * For extended information see the Belle [documentation](http://nikgraf.github.io/belle/#/configuration?_k=pbr5zm)
+ * @bit
+ */
+
+
 const ratingStyle = {
   style: {
     position: 'relative',

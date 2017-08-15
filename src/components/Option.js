@@ -1,6 +1,30 @@
 import React, { Component, PropTypes } from 'react';
-import { omit } from '../utils/helpers';
+import omit from '../utils/helpers/omit';
 import style from '../style/option';
+
+/**
+ * ## Belle's option component. Should be used together with the select component
+ * 
+ * In addition to the props listed below, you can also use any property valid for a HTML div like style, id, className, ...
+ * 
+ * &nbsp;
+ * ## More info
+ * See live [examples](https://gideonshils.github.io/Belle-With-Bit/).
+ * 
+ * For extended info, go to [Belle](http://nikgraf.github.io/belle/#/component/option?_k=oxoh5s) documentation.
+ *
+ * &nbsp;
+ * ## Standard example
+ * ```js
+ * <!-- basic select example with multiple options -->
+ * <Select>
+ * <Option value="berlin">Berlin</Option>
+ * <Option value="tokyo">Tokyo</Option>
+ * <Option value="vienna">Vienna</Option>
+ * </Select>
+ * ```
+ * @bit
+ */
 
 const optionPropTypes = {
   children: PropTypes.oneOfType([
@@ -8,10 +32,16 @@ const optionPropTypes = {
     PropTypes.node,
   ]),
   style: PropTypes.object,
+  /**
+   * @property {Object} hoverStyle - (optional) Works like React's built-in style property. Becomes active once the user hovers over the Option with the cursor or focus on it by leveragin the key board inputs like Arrow-down or Arrow-up.
+   */
   hoverStyle: PropTypes.object,
   selectStyle: PropTypes.object,
   disabledSelectStyle: PropTypes.object,
   _isDisplayedAsSelected: PropTypes.bool,
+  /**
+   * @property {String | Boolean | Number} value - (required) The value to be set in case this Option is selected. The value must be unique for all Options within one Select. It can be of type Boolean, String or Number.
+   */
   value: PropTypes.oneOfType([
     PropTypes.bool,
     PropTypes.string,
@@ -24,14 +54,14 @@ const optionPropTypes = {
   ]),
 };
 
-/**
+/*
  * Returns an object with properties that are relevant for the wrapping div.
  */
 function sanitizeChildProps(properties) {
   return omit(properties, Object.keys(optionPropTypes));
 }
 
-/**
+/*
  * Option component.
  *
  * This component should be used together with Belle's Select.
@@ -62,7 +92,7 @@ export default class Option extends Component {
     _isDisplayedAsSelected: false,
   };
 
-  /**
+  /*
    * Update the childProps based on the updated properties passed to the
    * Option.
    */

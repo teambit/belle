@@ -1,4 +1,4 @@
-/* global jest, describe, it, expect*/
+import { expect } from 'chai';
 
 import unionClassNames from '../utils/union-class-names';
 

@@ -1,3 +1,22 @@
+/**
+ * ## Used for styling the Belle ActionArea component
+ * 
+ * Belle provides you with the ability to modify the default appearance of its components.
+ * 
+ * With this example you overwrite the hover style of default Belle ActionArea Component
+ * ```js
+ * import ActionAreaStyle from 'bit/style/action-area-style';
+ * 
+ * ActionAreaStyle.hoverStyle = {
+ *  background: '#6FA8D1',
+ *  border: '1px solid #E0E0E0',
+ * }
+ * ```
+ * 
+ * For extended information see the Belle [documentation](http://nikgraf.github.io/belle/#/configuration?_k=pbr5zm)
+ * @bit
+ */
+
 const actionAreaStyle = {
 
   style: {

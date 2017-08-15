@@ -1,3 +1,16 @@
+/**
+ * ## Localization support for date picker component. For date picker, the following parameters can be provided for a locale
+ * * monthNames: Array for month names from January to December
+ * * dayNamesMin: Array for day short names
+ * * firstDay: First day of week (0 for Sunday, 1 for Monday, ...)
+ * * weekEnd: Weekend in that locale (0 for Sunday, 1 for Monday, ...)
+ * * isRTL: The text in that locale is written from right to left
+ * 
+ * In case any of these fields is not provided the defaults for English calendar will be used.
+ * 
+ * For extended information see the Belle [documentation](http://nikgraf.github.io/belle/#/configuration?_k=pbr5zm)
+ * @bit
+ */
 const i18nConfig = {
 
   localeData: {

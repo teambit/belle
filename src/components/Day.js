@@ -1,9 +1,8 @@
 import React, { Component, PropTypes } from 'react';
 
 /**
- * Belle internal component to wrap a Day in a DatePicker.
- *
- * This component exists to avoid binding functions in JSX.
+ * ## Belle internal component to wrap a Day in a DatePicker. This component exists to avoid binding functions in JSX.
+ * @bit
  */
 export default class Day extends Component {
 

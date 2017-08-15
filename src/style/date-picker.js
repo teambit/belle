@@ -1,3 +1,21 @@
+/**
+ * ## Used for styling the Belle DatePicker component
+ * 
+ * Belle provides you with the ability to modify the default appearance of its components.
+ * 
+ * With this example you overwrite the disabled hover style of default Belle DatePicker Component
+ * ```js
+ * import DatePickerStyle from 'bit/style/date-picker-style';
+ * 
+ * DatePickerStyle.disabledHoverStyle = {
+ *  background: '#6FA8D1',
+ * }
+ * ```
+ * 
+ * For extended information see the Belle [documentation](http://nikgraf.github.io/belle/#/configuration?_k=pbr5zm)
+ * @bit
+ */
+
 const datePickerStyle = {
 
   // wrapper of entire component

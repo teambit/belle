@@ -55,7 +55,7 @@
     "jest-cli": "^15.1.1",
     "react": "^15.4.1",
     "react-addons-test-utils": "^15.4.1",
-    "react-dom": "^15.4.1",
+    "react-dom": "^15.6.1",
     "react-transform-catch-errors": "^1.0.2",
     "react-transform-hmr": "^1.0.4",
     "redbox-react": "^1.2.2",
@@ -79,6 +79,6 @@
   },
   "license": "MIT",
   "dependencies": {
-    "exenv": "^1.2.0"
+    "exenv": "^1.2.2"
   }
 }

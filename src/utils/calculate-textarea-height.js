@@ -1,5 +1,13 @@
 import { canUseDOM as exenvCanUseDOM } from 'exenv';
 
+/**
+* @bit
+* @name calculateTextareaHeight
+* @description Helper method for Belle components. Returns an object containing height of the textare as if all the content
+* would be visible. The minHeight & maxHeight are in the object as well and are
+* based on minRows & maxRows.
+*/
+
 // our height calculation logic is not compatible with jsdom
 const isNodeTest = typeof process !== 'undefined' && process.env.NODE_ENV === 'test';
 const canUseDOM = exenvCanUseDOM && !isNodeTest;

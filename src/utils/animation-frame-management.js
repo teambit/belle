@@ -2,6 +2,12 @@
 
 import { canUseDOM } from 'exenv';
 
+/**
+* @bit
+* @name animationFrameManagement
+* @description Helper method for Belle components
+*/
+
 export let requestAnimationFrame;
 export let cancelAnimationFrame;
 

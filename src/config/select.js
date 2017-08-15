@@ -1,10 +1,21 @@
 import ReactDOM from 'react-dom';
 import isComponentOfType from '../utils/is-component-of-type.js';
-import { filterReactChildren, findIndex } from '../utils/helpers';
+import findIndex from '../utils/helpers/findIndex';
+import filterReactChildren from '../utils/helpers/filterReactChildren';
 import Option from '../components/Option';
 import Separator from '../components/Separator';
 
 /**
+ * # SelectConfig
+ * By default the menu of the Select component is positioned in a way that the focused Option is right above the previously selected one. In order to switch off this behaviour for all Select components in your application change the `shouldPositionOptions` option in config.
+ * 
+ * In order you as developer want to implement your own functionality you you can provide your own positioning function for all Select components. Keep in mind to set make the menu visible e.g. `display: block`.
+ * 
+ * For extended information see the Belle [documentation](http://nikgraf.github.io/belle/#/configuration?_k=pbr5zm)
+ * @bit
+ */
+
+/*
  * Returns the index of the entry with a certain value from the component's
  * children.
  *
@@ -22,7 +33,7 @@ const selectConfig = {
 
   shouldPositionOptions: true,
 
-  /**
+  /*
    * Repositions to the menu to position the focusedOption right on top
    * of the selected one.
    *

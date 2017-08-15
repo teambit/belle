@@ -1,46 +1,230 @@
 import React, { Component, PropTypes } from 'react';
 import { injectStyles, removeAllStyles } from '../utils/inject-style';
 import unionClassNames from '../utils/union-class-names';
-import { has, map, shift, reverse, omit, uniqueId } from '../utils/helpers';
-import {
-  convertDateToDateKey,
-  getDateKey,
-  getDateForDateKey,
-  getWeekArrayForMonth,
-  getLastDayForMonth,
-  getLocaleData,
-  today,
-} from '../utils/date-helpers';
+import omit from '../utils/helpers/omit';
+import has from '../utils/helpers/has';
+import map from '../utils/helpers/map';
+import shift from '../utils/helpers/shift';
+import reverse from '../utils/helpers/reverse';
+import uniqueId from '../utils/helpers/uniqueId';
+import convertDateToDateKey from '../utils/date-helpers/convertDateToDateKey';
+import getDateKey from '../utils/date-helpers/getDateKey';
+import getDateForDateKey from '../utils/date-helpers/getDateForDateKey';
+import getWeekArrayForMonth from '../utils/date-helpers/getWeekArrayForMonth';
+import getLastDayForMonth from '../utils/date-helpers/getLastDaysForMonth';
+import getLocaleData from '../utils/date-helpers/getLocaleData';
+import today from '../utils/date-helpers/today';
 import defaultStyle from '../style/date-picker';
 import config from '../config/datePicker';
 import ActionArea from './ActionArea';
 import DisabledDay from './DisabledDay';
 import Day from './Day';
 
+/**
+ * ## Belle's date picker component
+ * This implementation follows the recommendations proposed [here](http://www.w3.org/TR/wai-aria-practices/#datepicker)
+ * 
+ * In addition to the props listed below, you can also use:
+ * * Properties for handling various events(focus, mouse events, touch events, change in selectedDate, month or year):tabIndex, onFocus, onBlur, onKeyDown, onMouseDown, onMouseUp, onTouchStart, onTouchEnd, onTouchCancel, onUpdate, onMonthUpdate.
+ * * ... for adding attributes to specific coponents inside date picker:dayProps, navBarProps, prevMonthNavProps, prevMonthNavIconProps, nextMonthNavProps, nextMonthNavIconProps, monthLabelProps, dayLabelProps, weekHeaderProps, weekGridProps.
+ * * ... for adding class to date picker wrapper:className.
+ * * ... for adding styling to various parts of html structure of date picker: style, disabledStyle, readOnlyStyle, hoverStyle, activeStyle, focusStyle, disabledHoverStyle, navBarStyle, prevMonthNavStyle, prevMonthNavIconStyle, hoverPrevMonthNavStyle, activePrevMonthNavStyle, nextMonthNavStyle, nextMonthNavIconStyle, hoverNextMonthNavStyle, activeNextMonthNavStyle, weekHeaderStyle, monthLabelStyle, dayLabelStyle, disabledDayLabelStyle, weekendLabelStyle, dayStyle, disabledDayStyle, readOnlyDayStyle, activeDayStyle, focusDayStyle, disabledFocusDayStyle, todayStyle, selectedDayStyle, otherMonthDayStyle, weekendStyle.
+ * 
+ * &nbsp;
+ * ## More info
+ * See live [examples](https://gideonshils.github.io/Belle-With-Bit/).
+ * 
+ * For extended info, go to [Belle](http://nikgraf.github.io/belle/#/component/date-picker?_k=6uouuh) documentation.
+ * 
+ * &nbsp;
+ * ## Standard example
+ * ```js
+ * <DatePicker defaultValue={new Date(${TODAY.getFullYear()},  ${TODAY.getMonth()}, 15)} />
+ * ```
+ * 
+ * &nbsp;
+ * ## Internal HTML Structure
+ * This should help developer to understand how the DatePicker is structured in order to use the API
+ * ```js
+ * <div style={ style }>
+ * <div>
+ *   <!-- this is navigation bar at the top -->
+ *   <div style={ navBarStyle }>
+ *     <span style={ prevMonthStyle }></span>
+ *     <span style={ monthLabelStyle }></span>
+ *     <span style={ nextMonthStyle }></span>
+ *   </div>
+ *   <!-- this is week header -->
+ *   <div style={ weekHeaderStyle }>
+ *     <span style={ dayLabelStyle }></span>
+ *     <span style={ dayLabelStyle }></span>
+ *     <span style={ dayLabelStyle }></span>
+ *     <span style={ dayLabelStyle }></span>
+ *     <span style={ dayLabelStyle }></span>
+ *     <span style={ dayLabelStyle }></span>
+ *     <span style={ dayLabelStyle }></span>
+ *   </div>
+ *   <!-- following is repeated for each week -->
+ *   <div style={ dayStyle }></div>
+ *   <div style={ dayStyle }></div>
+ *   <div style={ dayStyle }></div>
+ *   <div style={ dayStyle }></div>
+ *   <div style={ dayStyle }></div>
+ *   <div style={ dayStyle }></div>
+ *   <div style={ dayStyle }></div>
+ * </div>
+ * </div>
+ * ```
+ * 
+ * &nbsp;
+ * ## DatePicker with other month days hidden but weekends styled differently
+ * ```js
+ * <DatePicker defaultValue={new Date(${TODAY.getFullYear()},  ${TODAY.getMonth()}, 15)}
+ *             showOtherMonthDate={ false } />
+ * ```
+ * 
+ * &nbsp;
+ * ## DatePicker highlighting special day
+ * ```js
+ * <DatePicker readOnly
+ *           renderDay={ this.renderDay }
+ *           defaultMonth={ 12 } />
+ *
+ * renderDay(day) {
+ * if (day.getDate() === 25 && day.getMonth() === 11) {
+ *   return (
+ *     <div>
+ *       <span style={{color: '#FFDA46'}}>✵</span>
+ *       <span style={{color: 'red'}}>
+ *         { day.getDate() }
+ *       </span>
+ *     </div>
+ *   );
+ * }
+ * return (
+ *   day.getDate()
+ * );
+ * }
+ * ```
+ * 
+ * &nbsp;
+ * ## Localization support in DatePicker
+ * Belle has inbuilt support for following locales: Arabic, French, Hebrew, Dutch, Chinese. Adding support for a new locale is very easy, check [Configuration](http://nikgraf.github.io/belle/#/configuration?_k=gfx4lz).
+ * ```js
+ * <DatePicker defaultValue={new Date(${TODAY.getFullYear()},  ${TODAY.getMonth()}, 15)}
+ *             locale={ this.state.selectedLocale } />
+ * ```
+ * 
+ * &nbsp;
+ * ## Controlled DatePicker component with onMonthUpdate callBack and reset option implemented
+ * ```js
+ * <DatePicker onMonthUpdate={ this.onMonthUpdate }
+ *           defaultMonth={ this.state.selectedMonth }
+ *           defaultYear={ this.state.selectedYear }
+ *           valueLink={ this.linkState('selectedDate') } />
+ *
+ * <div>
+ * <div>Date: { this.state.selectedDate ?
+ *              this.state.selectedDate.getMonth() + '/' +
+ *              this.state.selectedDate.getDate() + '/' +
+ *              this.state.selectedDate.getFullYear() : '-'}
+ * </div>
+ * <div>Month: {this.state.selectedMonth}</div>
+ * <div>Year: {this.state.selectedYear}</div>
+ * <div><a onClick={ this.resetDate }>Reset Date</a></div>
+ * </div>
+ *
+ * onMonthUpdate(month, year) {
+ * this.setState({
+ *   selectedMonth: month,
+ *   selectedYear: year
+ * });
+ * }
+ *
+ * resetDate() {
+ * this.setState({
+ *   selectedDate: undefined
+ * });
+ * }
+ * ```
+ * 
+ * &nbsp;
+ * ## Read only DatePicker
+ * ```js
+ * <DatePicker defaultValue={new Date(${TODAY.getFullYear()},  ${TODAY.getMonth()}, 15)}
+ *             readOnly/>
+ * ```
+ * 
+ * ## Disabled DatePicker
+ * ```js
+ * <DatePicker defaultValue={new Date(${TODAY.getFullYear()},  ${TODAY.getMonth()}, 15)}
+ *             disabled />
+ * ```
+ * @bit
+ */
+
 const datePickerPropTypes = {
   // value related props
+  /**
+   * @property {Date} defaultValue - (optional) Behaves like the defaultValue property of a native form components. The date can be manipulated through the user interface.
+   */
   defaultValue: PropTypes.instanceOf(Date),
+  /**
+   * @property {Date} value - (optional) Behaves like the value property of a native form components. The date can not be manipulated through the user interface.
+   */
   value: PropTypes.instanceOf(Date),
+  /**
+   * @property {ValueReference} valueLink - (optional) Behaves like the valueLink property of a native form components. ValueLink allows to enable two-way data binding between a state property and the value in the user interface.
+   */
   valueLink: PropTypes.shape({
     value: PropTypes.instanceOf(Date),
     requestChange: PropTypes.func.isRequired,
   }),
-
+  /**
+   * @property {Date} min - (optional) Sets the minimum date a user can select.
+   */
   min: PropTypes.instanceOf(Date),
+  /**
+   * @property {Date} max - (optional) Sets the maximum date a user can select.
+   */
   max: PropTypes.instanceOf(Date),
 
   // component config related props
+  /**
+   * @property {String} locale - (optional) Date picker will be rendered according to this locale.
+   */
   locale: PropTypes.string,
   month: PropTypes.oneOf([1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12]),
+  /**
+   * @property {Integer (1-12)} defaultMonth - (optional) When initially rendered the date picker will be display with the provided month.
+   */
   defaultMonth: PropTypes.oneOf([1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12]),
   year: PropTypes.number,
+  /**
+   * @property {Integer} defaultYear - (optional) When initially rendered the date picker will be display with the provided year.
+   */
   defaultYear: PropTypes.number,
+  /**
+   * @property {Boolean} showOtherMonthDate - (optional. default: true) This property can be used to show/hide the display of other month dates in date picker. Even if other month dates are displayed in date picker they will be disabled.
+   */
   showOtherMonthDate: PropTypes.bool,
+  /**
+   * @property {Function} renderDay - (optional) This function can be used to distinctly style some day(s).
+   */
   renderDay: PropTypes.func,
   tabIndex: PropTypes.number,
   'aria-label': PropTypes.string,
+  /**
+   * @property {Boolean} disabled - (optional. default: false) When set to true the date picker will be displayed as disabled component. User can do no interaction with this component, it can not even be focused. Disabled date picker is styled differently.
+   */
   disabled: PropTypes.bool,
+  /**
+   * @property {Boolean} readOnly - (optional. default: false) When set to true the date picker will be displayed as read only component. User can focus to read only date picker, change month but will not be able to select some day. Different styling can also be applied to read only date picker.
+   */
   readOnly: PropTypes.bool,
+  /**
+   * @property {Boolean} preventFocusStyleForTouchAndClick - (optional. default: true) Prevents the focus style being applied to the date picker in case the it becomes focused by a click or touch.
+   */
   preventFocusStyleForTouchAndClick: PropTypes.bool,
 
   // event callbacks for wrapper
@@ -54,7 +238,13 @@ const datePickerPropTypes = {
   onTouchCancel: PropTypes.func,
 
   // callbacks for change of values
+  /**
+   * @property {Function} onUpdate - (optional) The function will be called when user selects some day.
+   */
   onUpdate: PropTypes.func,
+  /**
+   * @property {Function} onMonthUpdate - (optional) The function will be called when user navigated to different month or year.
+   */
   onMonthUpdate: PropTypes.func,
 
   // props
@@ -113,20 +303,32 @@ const datePickerPropTypes = {
   activeDayStyle: PropTypes.object,
   focusDayStyle: PropTypes.object,
   disabledFocusDayStyle: PropTypes.object,
+  /**
+   * @property {Object} todayStyl - (optional) The property can be used to add to / change the styling of current date.
+   */
   todayStyle: PropTypes.object,
+  /**
+   * @property {Object} selectedDayStyle - (optional) The property can be used to add to / change the styling of the selected date.
+   */
   selectedDayStyle: PropTypes.object,
+  /**
+   * @property {Object} otherMonthDayStyle - (optional) The property can be used to add to / change the styling of other month day in date picker.
+   */
   otherMonthDayStyle: PropTypes.object,
+  /**
+   * @property {Object} weekendStyle - (optional) The property can be used to add to/change the styling of weekend.
+   */
   weekendStyle: PropTypes.object,
 };
 
-/**
+/*
  * Returns an object with properties that are relevant for the wrapping div of the date picker.
  */
 function sanitizeWrapperProps(properties) {
   return omit(properties, Object.keys(datePickerPropTypes));
 }
 
-/**
+/*
  * Returns an object with properties that are relevant for day span.
  */
 function sanitizeEmptyDayProps(properties) {
@@ -136,7 +338,7 @@ function sanitizeEmptyDayProps(properties) {
   ]);
 }
 
-/**
+/*
  * Returns an object with properties that are relevant for day span.
  */
 function sanitizeDisabledDayProps(properties) {
@@ -148,7 +350,7 @@ function sanitizeDisabledDayProps(properties) {
   ]);
 }
 
-/**
+/*
  * Returns an object with properties that are relevant for day span.
  */
 function sanitizeDayProps(properties) {
@@ -232,7 +434,7 @@ function sanitizeWeekGridProps(properties) {
   ]);
 }
 
-/**
+/*
  * Injects pseudo classes for styles into the DOM.
  */
 function updatePseudoClassStyle(pseudoStyleIds, properties, preventFocusStyleForTouchAndClick) {
@@ -272,7 +474,7 @@ function updatePseudoClassStyle(pseudoStyleIds, properties, preventFocusStyleFor
   injectStyles(styles);
 }
 
-/**
+/*
  * DatePicker React Component.
  *
  * This implementation follows the recommendations proposed here:
@@ -348,7 +550,7 @@ export default class DatePicker extends Component {
     showOtherMonthDate: true,
   };
 
-  /**
+  /*
    * Generates the style-id based on React's unique DOM node id.
    * Calls function to inject the pseudo classes into the dom.
    */
@@ -361,7 +563,7 @@ export default class DatePicker extends Component {
     updatePseudoClassStyle(this.pseudoStyleIds, this.props, this.preventFocusStyleForTouchAndClick);
   }
 
-  /**
+  /*
    * Function will update component state and styles as new props are received.
    */
   componentWillReceiveProps(properties) {
@@ -396,14 +598,14 @@ export default class DatePicker extends Component {
     updatePseudoClassStyle(this.pseudoStyleIds, properties, this.preventFocusStyleForTouchAndClick);
   }
 
-  /**
+  /*
    * Removes pseudo classes from the DOM once component gets unmounted.
    */
   componentWillUnmount() {
     removeAllStyles(Object.keys(this.pseudoStyleIds));
   }
 
-  /**
+  /*
    * Callback is called when wrapper is focused, it will conditionally set isFocused.
    *
    * In addition this.state.focusedDateKey will be set to current date of whichever month is displayed on date-picker (if this.state.focusedDateKey is undefined).
@@ -433,7 +635,7 @@ export default class DatePicker extends Component {
     }
   };
 
-  /**
+  /*
    * Callback is called when wrapper is blurred, it will reset isFocused, focusedDateKey.
    */
   _onBlur = () => {
@@ -449,7 +651,7 @@ export default class DatePicker extends Component {
     }
   };
 
-  /**
+  /*
     * Callback is called when wrapper receives mouseDown. Conditionally set isActive.
     */
   _onMouseDown = (event) => {
@@ -464,7 +666,7 @@ export default class DatePicker extends Component {
     }
   };
 
-  /**
+  /*
    * Callback is called when wrapper receives mouseUp. Reset isActive.
    */
   _onMouseUp = (event) => {
@@ -479,7 +681,7 @@ export default class DatePicker extends Component {
     }
   };
 
-  /**
+  /*
    * Callback is called when touch starts on wrapper. Conditionally sets isActive.
    */
   _onTouchStart = (event) => {
@@ -494,7 +696,7 @@ export default class DatePicker extends Component {
     }
   };
 
-  /**
+  /*
    * Callback is called when touch ends on wrapper. Reset isActive.
    */
   _onTouchEnd = () => {
@@ -519,7 +721,7 @@ export default class DatePicker extends Component {
     }
   };
 
-  /**
+  /*
    * On keyDown on wrapper if date-picker is not disabled and some day is focused:
    * 1. arrow keys will navigate calendar
    * 2. enter key will set selectedDate of component
@@ -585,7 +787,7 @@ export default class DatePicker extends Component {
     }
   };
 
-  /**
+  /*
    * Function will handle pageUp key down event.
    */
   _onPageUpKeyDown = (event) => {
@@ -613,7 +815,7 @@ export default class DatePicker extends Component {
     });
   };
 
-  /**
+  /*
    * Function will handle pageDown key down event.
    */
   _onPageDownKeyDown = (event) => {
@@ -641,7 +843,7 @@ export default class DatePicker extends Component {
     });
   };
 
-  /**
+  /*
    * Callback is called when some day receives mouseDown.
    * It will conditionally set this.state.activeDay, this.state.focusedDateKey and call props.onDayMouseDown.
    *
@@ -659,7 +861,7 @@ export default class DatePicker extends Component {
     }
   };
 
-  /**
+  /*
    * Callback is called when some day receives mouseUp.
    * It will reset this.state.activeDay and call props.onDayMouseUp.
    */
@@ -686,7 +888,7 @@ export default class DatePicker extends Component {
     }
   };
 
-  /**
+  /*
    * Callback is called when some day receives MouseEnter. It will conditionally set this.state.focusedDateKey.
    */
   _onDayMouseEnter = (dateKey, event) => {
@@ -701,7 +903,7 @@ export default class DatePicker extends Component {
     }
   };
 
-  /**
+  /*
    * Callback is called when some day receives MouseLeave. It will reset this.state.focusedDateKey.
    */
   _onDayMouseLeave = (dateKey, event) => {
@@ -717,7 +919,7 @@ export default class DatePicker extends Component {
     }
   };
 
-  /**
+  /*
    * Callback is called when some day receives touchStart.
    * It will conditionally set this.state.activeDay and call props.onDayTouchStart.
    */
@@ -733,7 +935,7 @@ export default class DatePicker extends Component {
     }
   };
 
-  /**
+  /*
    * Callback is called when some day receives touchEnd.
    * It will reset this.state.activeDay and call props.onDayTouchEnd.
    */
@@ -766,7 +968,7 @@ export default class DatePicker extends Component {
     }
   };
 
-  /**
+  /*
    * Depending on whether component is controlled or uncontrolled the function will update this.state.selectedDate.
    * It will also call props.onUpdate.
    */
@@ -792,7 +994,7 @@ export default class DatePicker extends Component {
     }
   }
 
-  /**
+  /*
    * Function will select / deselect date passed to it, it is used in case of 'Space' keyDown on a day.
    */
   _triggerToggleDate(date) {
@@ -831,7 +1033,7 @@ export default class DatePicker extends Component {
     }
   }
 
-  /**
+  /*
    * The function is mainly used when some day is focused and Arrow keys are pressed to navigate to some other day.
    * days is the number of days by which focused should be moved ahead or behind.
    */
@@ -859,7 +1061,7 @@ export default class DatePicker extends Component {
     });
   }
 
-  /**
+  /*
    * The function will decrease current month in state. It will also call props.onMonthUpdate.
    */
   _decreaseMonthYear() {
@@ -884,7 +1086,7 @@ export default class DatePicker extends Component {
     }
   }
 
-  /**
+  /*
    * The function will increase current month in state. It will also call props.onMonthUpdate.
    */
   _increaseMonthYear() {
@@ -992,7 +1194,7 @@ export default class DatePicker extends Component {
     );
   }
 
-  /**
+  /*
    * Function will return jsx for rendering the nav bar for calendar.
    * Depending on following rules it will apply styles to prevMonthNav and nextMonthNav:
    * 1. If disabled hide navs
@@ -1030,7 +1232,7 @@ export default class DatePicker extends Component {
     );
   }
 
-  /**
+  /*
    * Function will return jsx for rendering the week header for calendar.
    * Disabled styles will be applied for disabled date-picker.
    * Day headers will be rendered using locale information.
@@ -1084,7 +1286,7 @@ export default class DatePicker extends Component {
     );
   }
 
-  /**
+  /*
    * Function will return jsx for rendering the a day.
    * It will apply various styles in sequence as below (styles will be additive):
    * 1. If component is readOnly apply readOnly styles
@@ -1234,7 +1436,7 @@ export default class DatePicker extends Component {
     );
   }
 
-  /**
+  /*
    * Function will render:
    * - main calendar component
    * - call methods to render navBar and week header
